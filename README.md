@@ -26,6 +26,7 @@ npm start -- [-p] [-t <timeout>] <feed1> [feed2...]
 -p            Play most recent podcast on inital load
 -t <timeout>  Specify a timeout before querying the feed again
 <feed>        The url of the podcast feed
+[feed2...]    Any number of additional podcast feeds
 
 example:
 npm start -- -p -t 10 https://feeds.npr.org/500005/podcast.xml
