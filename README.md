@@ -21,7 +21,7 @@ One of the audio players that works with play-sound - https://www.npmjs.com/pack
 ## Command Line Options
 
 ```
-npm start -- [-p] [-t <timeout>] <feed>
+npm start -- [-p] [-t <timeout>] <feed1> [feed2...]
 
 -p            Play most recent podcast on inital load
 -t <timeout>  Specify a timeout before querying the feed again
@@ -36,9 +36,9 @@ npm start -- -p -t 10 https://feeds.npr.org/500005/podcast.xml
 Alternatively to command line agruments you can create a .config.json file in the base directory of the project
 ```
 {
-    "feed": "https://feeds.npr.org/500005/podcast.xml",   //The url of the podcast feed
-    "timeout": 10,                                        //Specify a timeout before querying the feed again
-    "playOnLoad": false                                   //Play most recent podcast on inital load
+    "feeds": ["https://feeds.npr.org/500005/podcast.xml"],   //Array of urls for each podcast feed
+    "timeout": 10,                                           //Specify a timeout before querying the feed again
+    "playOnLoad": false                                      //Play most recent podcast on inital load
 }
 ```
 
