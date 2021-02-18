@@ -2,8 +2,15 @@ const { default: axios } = require("axios");
 const xml2js = require("xml2js");
 const fs = require("fs");
 const config = require("../.config.json");
-var player = require('play-sound')(opts = {})
+const player = require('play-sound')(opts = {})
+const readline = require('readline');
 
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+let audio = null;
 let feed = null;
 let lastPlayedGuid = null;
 let playOnLoad = false;
@@ -17,12 +24,7 @@ const checkForUpdate = async () => {
 
 		const guid = json.rss.channel[0].item[0].guid[0]._;
 
-		console.log("Last Guid:", lastPlayedGuid);
-		console.log("Current GUID:", guid);
-
 		if (guid !== lastPlayedGuid) {
-
-			console.log("GUIDs are different");
 
 			lastPlayedGuid = guid;
 
@@ -34,28 +36,61 @@ const checkForUpdate = async () => {
 
 			const url = json.rss.channel[0].item[0].enclosure[0].$.url;
 
-			console.log("fetching podcast: ", url);
-
 			const podcast = await axios({
 				method: "get",
 				url,
 				responseType: "stream",
 			});
+
 			podcast.data.pipe(fs.createWriteStream("podcast.mp3"));
 
-			console.log("Playing podcast")
+			await playPodcast();
 
-			player.play("podcast.mp3", (err) => {
-				console.log(err);
-				throw err;
-			});
-
-			console.log("Done");
 		}
 	} catch (error) {
 		console.log(error);
 	}
 };
+
+const playPodcast = () => {
+	if(audio) return;
+
+	return new Promise((resolve, error) => {
+		audio = player.play("podcast.mp3", (err) => {
+			audio = null;
+			if(err) error(err);
+			else resolve();
+		});
+	});
+	
+};
+
+const requestInput = () => {
+	return new Promise(resolve => {
+		rl.question("Command: ", (command) => {
+			resolve(command);
+		})
+	});
+}
+
+const handleInput = async () => {
+	while(true) {
+		try
+		{
+			const command = await requestInput();
+			if(command === "Stop") {
+				if(audio) audio.kill();
+			}
+			else if(command === "Start") {
+				playPodcast();
+			}
+		}
+		catch(error)
+		{
+			console.error("Error on input", error)
+		}
+	}
+}
 
 const processArgumentsAndConfig = () => {
 	const argv = require('minimist')(process.argv.slice(2), {boolean: "p"});
@@ -87,4 +122,5 @@ const run = async () => {
 };
 
 processArgumentsAndConfig();
+handleInput();
 run();
