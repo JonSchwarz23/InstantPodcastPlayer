@@ -11,9 +11,9 @@ One of the audio players that works with play-sound - https://www.npmjs.com/pack
 ## Installation
 
  ```
- git clone git@github.com:JonSchwarz23/InstantPodcastPlayer.git
+ git clone git@github.com:JonSchwarz23/instant-podcast-player.git
  
- cd InstantPodcastPlayer
+ cd instant-podcast-player
  
  npm install
  ```
