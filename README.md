@@ -44,10 +44,10 @@ Alternatively to command line agruments you can create a .config.json file in th
 
 ## Usage
 
-You can enter a couple of commands after the program hast started
+You can enter a couple of commands after the program has started
 ```
 Command: <command>
 
-Stop - Stops the podcast if one is currently playing
-Start - Starts the most recent podcast on the feed
+Stop   Stops the podcast if one is currently playing
+Start  Starts the most recent podcast on the feed
 ```
