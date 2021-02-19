@@ -52,3 +52,17 @@ Command: <command>
 Stop   Stops the podcast if one is currently playing
 Start  Starts the most recent podcast on the feed
 ```
+
+## Recommended Podcasts
+
+<a href="https://www.omnycontent.com/d/playlist/4b5f9d6d-9214-48cb-8455-a73200038129/910538ff-31ef-4254-ad19-a7a00176ef6c/73579376-e7f0-4ea2-be51-a7a00176ef7f/podcast.rss">CBS Sports Minute</a>
+
+<a href="https://audioboom.com/channels/3270305.rss">Headline News from The Associated Press</a>
+
+<a href="https://feeds.npr.org/500005/podcast.xml">NPR News Now</a>
+
+<a href="https://video-api.wsj.com/podcast/rss/wsj/minute-briefing">WSJ Minute Briefing</a>
+
+## Warnings
+
+I have only used and tested this on a Windows 10 computer. I would guess there are issues if you were to try to run this in a different enviroment.
