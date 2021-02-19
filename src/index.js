@@ -1,9 +1,10 @@
 const config = require("../.config.json");
 const readline = require('readline');
 const Podcast = require("./podcast.js");
-const notified = require("node-notifier");
 const log = require('loglevel');
 const notifier = require('node-notifier');
+const Spotify = require("./spotify");
+const { async } = require("crypto-random-string");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -15,10 +16,11 @@ let playOnLoad = false;
 let timeout = 10;
 let podcasts = [];
 let feed = null;
+let spotifyHandler = null;
 
 const loadPodcasts = (urls) => {
 	urls.forEach((url, i) => {
-		podcasts.push(new Podcast(url, i, audio, notifier));
+		podcasts.push(new Podcast(url, i, audio, notifier, spotifyHandler));
 	});
 };
 
@@ -94,15 +96,28 @@ const run = async () => {
 	}
 };
 
+const initializeSpotify = async () => {
+	const spotify = new Spotify("b00130f5b7ec4b8b82a3faacdbc5f1e2");
+	await spotify.initialize();
+	spotifyHandler = spotify;
+};
+
 notifier.on('skip', () => {
 	if(audio.player) audio.player.kill();
   });
 
-log.enableAll();
-log.debug("Starting...");
-processArgumentsAndConfig();
-//handleInput();
-run();
+const main = async () => {
+	log.enableAll();
+	log.debug("Starting...");
+	await initializeSpotify();
+	processArgumentsAndConfig();
+	//handleInput();
+	run();
+};
+
+main()
+
+
 
 
 
