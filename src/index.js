@@ -1,6 +1,9 @@
 const config = require("../.config.json");
 const readline = require('readline');
 const Podcast = require("./podcast.js");
+const notified = require("node-notifier");
+const log = require('loglevel');
+const notifier = require('node-notifier');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -15,7 +18,7 @@ let feed = null;
 
 const loadPodcasts = (urls) => {
 	urls.forEach((url, i) => {
-		podcasts.push(new Podcast(url, i, audio));
+		podcasts.push(new Podcast(url, i, audio, notifier));
 	});
 };
 
@@ -91,6 +94,18 @@ const run = async () => {
 	}
 };
 
+notifier.on('skip', () => {
+	if(audio.player) audio.player.kill();
+  });
+
+log.enableAll();
+log.debug("Starting...");
 processArgumentsAndConfig();
-handleInput();
+//handleInput();
 run();
+
+
+
+
+
+
