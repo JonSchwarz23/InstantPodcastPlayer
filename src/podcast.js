@@ -3,17 +3,18 @@ const xml2js = require("xml2js");
 const fs = require("fs");
 const player = require("play-sound")((opts = {}));
 const log = require("loglevel");
+const EventEmitter = require("events");
 
 const Podcast = class {
-  constructor(url, id, audio, notifier, spotifyHandler) {
+  constructor(url, id, audio) {
     this.id = id;
     this.url = url;
     this.audio = audio;
-    this.notifier = notifier;
-    this.spotifyHandler = spotifyHandler;
 
+    this.eventEmitter = new EventEmitter();
     this.lastPlayedGuid = null;
     this.title = null;
+    this.picture = `podcast-${this.id}-image`;
   }
 
   async checkForUpdate(skipPlaying) {
@@ -22,9 +23,7 @@ const Podcast = class {
 
     if (!this.title) {
       this.title = json.rss.channel[0].title[0];
-
       const pictureLink = json.rss.channel[0].image[0].url[0];
-
       await this.download(pictureLink, `podcast-${this.id}-image`);
     }
 
@@ -49,32 +48,23 @@ const Podcast = class {
 
       const description = json.rss.channel[0].item[0].title[0];
 
-      const playerState = await this.spotifyHandler.getPlayerInformation();
-
-      let wasRunning = false;
-
-      if (playerState.is_playing) {
-        this.spotifyHandler.pausePlayback();
-        wasRunning = true;
-      }
-
-      this.notifier.notify({
-        title: this.title,
-        message: `Now playing ${description}`,
-        icon: `podcast-${this.id}-image`,
-        actions: ["OK", "Skip"],
-      });
+      this.eventEmitter.emit(
+        "startPlayback",
+        this.title,
+        description,
+        this.picture
+      );
 
       await this.playPodcast();
 
-      if (wasRunning) {
-        await this.spotifyHandler.resumePlayback({
-          position_ms: playerState.progress_ms,
-        });
-      }
+      this.eventEmitter.emit("stopPlayback");
 
       log.debug("Played Podcast", this.title);
     }
+  }
+
+  addEventListener(event, callback) {
+    this.eventEmitter.on(event, callback);
   }
 
   download(url, filename) {

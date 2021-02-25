@@ -1,126 +1,127 @@
 const config = require("../.config.json");
-const readline = require('readline');
 const Podcast = require("./podcast.js");
-const log = require('loglevel');
-const notifier = require('node-notifier');
-const Spotify = require("./spotify");
-const { async } = require("crypto-random-string");
+const log = require("loglevel");
+const notifier = require("node-notifier");
+const Spotify = require("@jonschwarz23/spotify");
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-let audio = {player: null};
+let audio = { player: null };
 let playOnLoad = false;
 let timeout = 10;
 let podcasts = [];
 let feed = null;
-let spotifyHandler = null;
+let spotifyClientId = null;
 
 const loadPodcasts = (urls) => {
 	urls.forEach((url, i) => {
-		podcasts.push(new Podcast(url, i, audio, notifier, spotifyHandler));
+		const podcast = new Podcast(url, i, audio);
+
+		if (spotifyClientId) {
+			podcast.addEventListener("startPlayback", playbackStartSpotify);
+			podcast.addEventListener("stopPlayback", stopPlaybackSpotify);
+		}
+
+		podcast.addEventListener("startPlayback", playbackStartNotifier);
+
+		podcasts.push(podcast);
 	});
 };
 
 const checkForUpdates = async () => {
-	for(const podcast of podcasts) {
+	for (const podcast of podcasts) {
 		await podcast.checkForUpdate(!playOnLoad);
 	}
 	playOnLoad = true;
 };
 
-const playPodcasts = async () => {
-	for(const podcast of podcasts) {
-		await podcast.playPodcast();
-	}
+const processArgumentsAndConfig = () => {
+	const argv = require("minimist")(process.argv.slice(2), { boolean: "p" });
+
+	if (config.feed)
+		feed = typeof config.feed === "string" ? [config.feed] : config.feed;
+	else
+		throw new Error(
+			"Feed must be set either through command line or config file"
+		);
+	if (config.playOnLoad) playOnLoad = config.playOnLoad;
+	if (config.timeout) timeout = config.timeout;
+	if (config.spotify) spotifyClientId = config.spotify;
 };
 
-
-const requestInput = () => {
-	return new Promise(resolve => {
-		rl.question("Command: ", (command) => {
-			resolve(command);
-		})
-	});
-}
-
-const handleInput = async () => {
-	while(true) {
-		try
-		{
-			const command = await requestInput();
-			if(command === "Stop") {
-				if(audio.player) audio.player.kill();
-			}
-			else if(command === "Start") {
-				playPodcasts();
-			}
-		}
-		catch(error)
-		{
-			console.error("Error on input", error)
-		}
-	}
-}
-
-const processArgumentsAndConfig = () => {
-	const argv = require('minimist')(process.argv.slice(2), {boolean: "p"});
-
-	if(config.feed) feed = typeof config.feed === "string" ? [config.feed] : config.feed;
-	if(config.playOnLoad) playOnLoad = config.playOnLoad;
-	if(config.timeout) timeout = config.timeout;
-
-	if(argv._.length >= 1) feed = (feed || []).concat(argv._[0]);
-	if(argv.t) timeout = parseInt(argv.t);
-	if(argv.p) playOnLoad = true;
-
-	if(!feed) throw new Error("Feed must be set either through command line or config file");
-
-	loadPodcasts(feed);
-}
-
 const run = async () => {
-	try
-	{
+	try {
 		await checkForUpdates();
-	}
-	catch(error)
-	{
-		console.log(error)
-	}
-	finally
-	{
+	} catch (error) {
+		console.log(error);
+	} finally {
 		setTimeout(run, timeout * 1000);
 	}
 };
 
+const spotify = {};
+
 const initializeSpotify = async () => {
-	const spotify = new Spotify("b00130f5b7ec4b8b82a3faacdbc5f1e2");
-	await spotify.initialize();
-	spotifyHandler = spotify;
+	spotify.handler = new Spotify(
+		spotifyClientId,
+		["user-modify-playback-state", "user-read-playback-state"],
+		9000
+	);
+	await spotify.handler.initialize();
 };
 
-notifier.on('skip', () => {
-	if(audio.player) audio.player.kill();
-  });
+const playbackStartSpotify = async () => {
+	try {
+		spotify.playerState = await spotify.handler.getPlayerInformation();
+
+		if (spotify.playerState.is_playing) {
+			await spotify.handler.pausePlayback();
+		} else {
+			spotify.playerState = null;
+		}
+	} catch (error) {
+		console.log("Failed to get spotify state/pause playback", error);
+	}
+};
+
+const stopPlaybackSpotify = async () => {
+	try {
+		if (spotify.playerState) {
+			await spotify.handler.resumePlayback({
+				position_ms: spotify.playerState.progress_ms,
+			});
+		}
+	} catch (error) {
+		console.log("Failed to get spotify start playback", error);
+	}
+};
+
+//Notifications
+
+const playbackStartNotifier = (title, description, picture) => {
+	try {
+		notifier.notify({
+			title,
+			message: `Now playing ${description}`,
+			icon: picture,
+			actions: ["OK", "Skip"],
+		});
+	} catch (error) {
+		console.log("Could not show notification", error);
+	}
+};
+
+notifier.on("skip", () => {
+	if (audio.player) audio.player.kill();
+});
+
+//Startup
 
 const main = async () => {
 	log.enableAll();
 	log.debug("Starting...");
-	await initializeSpotify();
 	processArgumentsAndConfig();
-	//handleInput();
+	if (spotifyClientId) await initializeSpotify();
+	loadPodcasts(feed);
 	run();
 };
 
-main()
-
-
-
-
-
-
-
-
+main();

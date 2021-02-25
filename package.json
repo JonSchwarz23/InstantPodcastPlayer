@@ -18,10 +18,8 @@
   },
   "homepage": "https://github.com/JonSchwarz23/InstantPodcastPlayer#readme",
   "dependencies": {
+    "@jonschwarz23/spotify": "^1.0.0",
     "axios": "^0.21.1",
-    "base64url": "^3.0.1",
-    "crypto-random-string": "^3.3.1",
-    "express": "^4.17.1",
     "loglevel": "^1.7.1",
     "minimist": "^1.2.5",
     "node-notifier": "^9.0.0",

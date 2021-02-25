@@ -1,0 +1,6 @@
+{
+    "feed": ["https://feeds.npr.org/500005/podcast.xml","https://video-api.wsj.com/podcast/rss/wsj/minute-briefing"],
+    "timeout": 30,
+    "playOnLoad": true,
+    "spotify": "clientId or just remove this"
+}
